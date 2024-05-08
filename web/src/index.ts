@@ -47,65 +47,22 @@ class EventMap {
         this.marker = new Marker(this.url_hash)
 
         this.layer_switcher.setInitialVisibility(map_style)
-        this.map = new maplibregl.Map(
-            this.url_hash.init({
+        this.map = new maplibregl.Map({
                 container: 'map',
                 style: map_style,
-                pitchWithRotate: false,
-                dragRotate: false,
-            })
+                hash: true,
+                zoom: 17.12,
+                center: [-2.377036, 52.04143],
+                attributionControl: false
+            }
         )
+        this.map.rotateTo(25);
 
         this.map.touchZoomRotate.disableRotation()
 
-        this.map.addControl(new maplibregl.NavigationControl(), 'top-right')
-
-        this.map.addControl(
-            new maplibregl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true,
-                },
-                trackUserLocation: true,
-            })
-        )
-
-        this.map.addControl(
-            new maplibregl.ScaleControl({
-                maxWidth: 200,
-                unit: 'metric',
-            })
-        )
-
-        this.map.addControl(new DistanceMeasure(), 'top-right')
-        this.map.addControl(new InstallControl(), 'top-left')
-
-        /*
-    map.addControl(
-      new VillagesEditor('villages', 'villages_symbol'),
-      'top-right',
-    );
-    */
         this.map.addControl(this.layer_switcher, 'top-right')
         this.url_hash.enable(this.map)
 
-        this.map.addControl(this.marker, 'top-right')
-
-        const contextMenu = new ContextMenu(this.map)
-        contextMenu.addItem('Set marker', (_e, coords) => {
-            this.marker!.setLocation(coords)
-        })
-        contextMenu.addItem(
-            'Clear marker',
-            () => {
-                this.marker!.setLocation(null)
-            },
-            () => this.marker!.location != null
-        )
-
-        contextMenu.addItem('Copy coordinates', (_e, coords) => {
-            const [lng, lat] = roundPosition([coords.lng, coords.lat], this.map!.getZoom())
-            navigator.clipboard.writeText(lat + ', ' + lng)
-        })
     }
 }
 
