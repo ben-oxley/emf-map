@@ -10,11 +10,6 @@ import ContextMenu from './contextmenu'
 import { roundPosition } from './util'
 import InstallControl from './installcontrol'
 
-if (import.meta.env.DEV) {
-    map_style.sources.villages.data = 'http://localhost:2342/api/villages.geojson'
-    map_style.sources.site_plan.url = 'http://localhost:8888/capabilities/buildmap'
-    map_style.glyphs = 'http://localhost:8080/fonts/{fontstack}/{range}.pbf'
-}
 
 class EventMap {
     layers: Record<string, string> = {
@@ -31,6 +26,8 @@ class EventMap {
         Power: 'power_',
         Lighting: 'lighting_',
         Villages: 'villages_',
+        Fire: 'fire_',
+        'Licence Boundary': 'license_'
     }
     map?: maplibregl.Map
     layer_switcher?: LayerSwitcher

@@ -8,11 +8,8 @@ class VillagesLayer {
     this._source = source;
     this._layer = click_layer;
     this._wiki_url = 'https://wiki.emfcamp.org/wiki/';
-    if (DEV) {
-      this._api_url = 'http://localhost:2342';
-    } else {
-      this._api_url = 'https://www.emfcamp.org';
-    }
+
+    this._api_url = 'https://www.emfcamp.org';
     this.popup = null;
   }
 
