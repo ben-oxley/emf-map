@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import useMqtt from './useMqtt'
 import mqtt from 'mqtt';
 import logo from './logo.svg';
 import './App.css';
@@ -17,84 +18,92 @@ const layers = {
   Lighting: "lighting_",
   Villages: "villages_"
 };
+
+const layerIDs = {
+  A:"Aerial Imagery",
+  B:"Background",
+  Bu:"Buried Services",
+  D:"DKs",
+  H:"Hillshade",
+  L:"Lighting",
+  N:"NOC-Physical",
+  P:"Paths",
+  Po:"Power",
+  S:"Slope",
+  St:"Structures",
+  V:"Villages",
+  W:"Water"
+}
 const effects = {
 
 }
 
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    .replace(/[xy]/g, function (c) {
-      const r = Math.random() * 16 | 0,
-        v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-}
 
-
-const url = "wss://e8c681f0b4ba40d78aad5ddb06840b9b.s1.eu.hivemq.cloud:8884/mqtt"
-// Create an MQTT client instance
-const options = {
-  // Clean session
-  clean: true,
-  connectTimeout: 4000,
-  // Authentication
-  clientId: uuidv4(),
-  username: 'emfmap',
-  password: 'hA6H7AK&7J#fme#dmhe2',
-}
-const client = mqtt.connect(url, options)
-client.on('connect', function () {
-  console.log('Connected')
-  // Subscribe to a topic
-  client.subscribe('#', function (err) {
-    if (!err) {
-      // Publish a message to a topic
-      client.publish('test', 'Hello mqtt')
-    }
-  })
-})
 
 
 function App() {
   const [layers_enabled, setLayers] = useState(["Background", "Structures", "Paths", "Villages"]);
-  
-  function changeValue(el, value) {
-    if (el.target.checked) {
-      client.publish('add', value)
-      setLayers([
-        ...layers_enabled,
-        value
-      ])
-    } else {
-      client.publish('remove', value)
-      setLayers(
-        layers_enabled.filter(a =>
-          a !== value
-        )
-      );
+  const { mqttSubscribe, mqttPublish, isConnected, payload } = useMqtt();
+
+  useEffect(() => {
+    Notification.requestPermission();
+  }, []);
+ 
+  useEffect(() => {
+    if (isConnected) {
+      mqttSubscribe('#');
     }
-  }
-  
-  if(client.listeners('message').length==0){
-    console.log("running effect")
-    client.on('message', function (topic, message) {
-      if (topic=="add") {
+  }, [isConnected]);
+ 
+  useEffect(() => {
+    if (payload.message
+      && ['add',"remove","state"].includes(payload.topic)
+    ) {
+      if (payload.topic=="add") {
         setLayers([
           ...layers_enabled,
-          message
+          payload.message
         ])
       }
-      if (topic=="remove") {
+      if (payload.topic=="remove") {
         setLayers(
           layers_enabled.filter(a =>
-            a !== message
+            a !== payload.message
           )
         );
       }
-      // message is Buffer
-      console.log(message.toString())
-    })
+      if (payload.topic=="state") {
+        setLayers(
+          payload.message.split(",").map(id=>layerIDs[id])
+        );
+      }
+    }
+  }, [payload]);
+  
+
+
+  function changeValue(el, value) {
+    if (el.target.checked) {
+      //mqttPublish('add', value)
+      let layers = [
+        ...layers_enabled,
+        value
+      ]
+      setLayers(layers);
+      let tags = layers.map(l=> Object.entries(layerIDs).filter(([k,v])=>v==l).map(([k,v])=>k)[0]).join(",")
+      mqttPublish('state', tags)
+    } else {
+      //mqttPublish('remove', value)
+      let layers = layers_enabled.filter(a =>
+        a !== value
+      )
+      setLayers(layers);
+      let tags = layers.map(l=> Object.entries(layerIDs).filter(([k,v])=>v==l).map(([k,v])=>k)[0]).join(",")
+      mqttPublish('state', tags)
+    }
   }
+  
+
   
 
   return (
